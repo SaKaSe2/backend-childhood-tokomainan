@@ -1,0 +1,73 @@
+## 🎯 Query Examples
+
+### Products
+
+#### Get All Products
+```php
+Product::all();
+```
+
+#### Get with Pagination
+```php
+Product::paginate(10);
+```
+
+#### Search Products
+```php
+Product::where('name', 'like', '%lego%')->get();
+```
+
+#### Filter by Category
+```php
+Product::where('category', 'lego')->get();
+```
+
+#### Get Featured Products
+```php
+Product::where('is_featured', true)->get();
+```
+
+#### Sort by Price
+```php
+Product::orderBy('price', 'asc')->get();
+```
+
+#### Complex Query
+```php
+Product::where('category', 'lego')
+    ->where('price', '<', 1000000)
+    ->where('stock', '>', 0)
+    ->orderBy('rating', 'desc')
+    ->paginate(10);
+```
+
+#### With Soft Deleted
+```php
+Product::withTrashed()->get();
+```
+
+#### Only Soft Deleted
+```php
+Product::onlyTrashed()->get();
+```
+
+#### Restore Soft Deleted
+```php
+Product::withTrashed()->find($id)->restore();
+```
+
+### Users
+
+#### Find by Email
+```php
+User::where('email', 'test@example.com')->first();
+```
+
+#### Create User
+```php
+User::create([
+    'name' => 'John Doe',
+    'email' => 'john@example.com',
+    'password' => bcrypt('password123')
+]);
+```
