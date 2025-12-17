@@ -1,7 +1,7 @@
 🔧 Langkah-langkah Setup Terminal
 --------------------------------------------------------------------------
 1. Install JWT Auth Package bash, tulis: 
-(composer require php-open-source-saver/jwt-auth)
+(#composer require php-open-source-saver/jwt-auth#)
 --------------------------------------------------------------------------
 2. Publish Konfigurasi JWT bash, tulis:
 (php artisan vendor:publish --provider="PHPOpenSourceSaver\JWTAuth\Providers\LaravelServiceProvider")
