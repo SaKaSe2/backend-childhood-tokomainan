@@ -187,7 +187,7 @@ Authorization: Bearer <your_jwt_token>
 **Disusun oleh:**
 - Rikza Ahmad Nur Muhammad
 
-**Univercity**  
+**University**  
 Universitas Muhammadiyah Malang
 
 ---
