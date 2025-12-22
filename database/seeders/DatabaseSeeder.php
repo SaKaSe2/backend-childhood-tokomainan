@@ -13,18 +13,28 @@ class DatabaseSeeder extends Seeder
 
     public function run(): void
     {
-        // Create admin user
+        // Create ADMIN user
         User::factory()->create([
-            'name' => 'Admin User',
+            'name' => 'Admin Childhood',
             'email' => 'admin@childhood.com',
-            'password' => bcrypt('password123'),
+            'password' => bcrypt('admin123'), // Password: admin123
+            'role' => 'admin', // ROLE ADMIN
         ]);
 
-        // Create regular user
+        // Create regular USER
         User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+            'name' => 'User Test',
+            'email' => 'user@childhood.com',
+            'password' => bcrypt('user123'), // Password: user123
+            'role' => 'user', // ROLE USER
+        ]);
+
+        // Create another regular user
+        User::factory()->create([
+            'name' => 'Test Customer',
+            'email' => 'customer@example.com',
             'password' => bcrypt('password123'),
+            'role' => 'user',
         ]);
 
         // Seed products and transactions
@@ -32,5 +42,9 @@ class DatabaseSeeder extends Seeder
             ProductSeeder::class,
             TransactionSeeder::class,
         ]);
+
+        $this->command->info('✅ Seeder completed!');
+        $this->command->info('📧 Admin: admin@childhood.com | Password: admin123');
+        $this->command->info('📧 User: user@childhood.com | Password: user123');
     }
 }

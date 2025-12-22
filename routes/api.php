@@ -12,7 +12,9 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-// Auth routes
+// ============================================
+// AUTH ROUTES (PUBLIC)
+// ============================================
 Route::group(['middleware' => 'api', 'prefix' => 'auth'], function ($router) {
     Route::post('register', [AuthController::class, 'register']);
     Route::post('login', [AuthController::class, 'login']);
@@ -20,7 +22,9 @@ Route::group(['middleware' => 'api', 'prefix' => 'auth'], function ($router) {
     Route::get('me', [AuthController::class, 'me'])->middleware('auth:api');
 });
 
-// Public Product Routes (GET - tidak perlu auth)
+// ============================================
+// PRODUCT ROUTES (PUBLIC - GET)
+// ============================================
 Route::get('products', [ProductController::class, 'index']);
 Route::get('products/{product}', [ProductController::class, 'show']);
 Route::get('products/slug/{slug}', function ($slug) {
@@ -31,18 +35,32 @@ Route::get('products/slug/{slug}', function ($slug) {
     return response()->json($product);
 });
 
-// Protected Product Routes (CRUD - perlu auth)
+// ============================================
+// PROTECTED ROUTES (AUTHENTICATED USERS)
+// ============================================
 Route::middleware(['auth:api'])->group(function () {
+
+    // USER: My Transactions (Regular users can see their own transactions)
+    Route::get('transactions/my', [TransactionController::class, 'myTransactions']);
+
+    // USER: Create Transaction (Regular users can make purchases)
+    Route::post('transactions', [TransactionController::class, 'store']);
+});
+
+// ============================================
+// ADMIN ONLY ROUTES
+// ============================================
+Route::middleware(['auth:api', 'admin'])->group(function () {
+
+    // ADMIN: Product Management
     Route::post('products', [ProductController::class, 'store']);
     Route::put('products/{product}', [ProductController::class, 'update']);
     Route::patch('products/{product}', [ProductController::class, 'update']);
     Route::delete('products/{product}', [ProductController::class, 'destroy']);
 
-    // Transaction Routes
+    // ADMIN: Transaction Management (View all, update, delete)
     Route::get('transactions', [TransactionController::class, 'index']);
-    Route::get('transactions/my', [TransactionController::class, 'myTransactions']);
     Route::get('transactions/{code}', [TransactionController::class, 'show']);
-    Route::post('transactions', [TransactionController::class, 'store']);
     Route::patch('transactions/{code}', [TransactionController::class, 'update']);
     Route::delete('transactions/{code}', [TransactionController::class, 'destroy']);
 });
