@@ -1,4 +1,5 @@
 <?php
+// app/Http/Controllers/ProductController.php
 
 namespace App\Http\Controllers;
 
@@ -11,8 +12,6 @@ class ProductController extends Controller
 {
     /**
      * GET ALL - Menampilkan semua produk dengan pagination & filtering
-     * PUBLIC - Tidak perlu authentication
-     * URL: GET /api/products?page=1&limit=10&search=lego&orderBy=price&sortBy=desc
      */
     public function index(Request $request): JsonResponse
     {
@@ -32,8 +31,12 @@ class ProductController extends Controller
         }
 
         $query->orderBy($orderBy, $sortBy);
-
         $products = $query->paginate($limit);
+
+        // ✅ PERBAIKAN: Transform semua produk
+        $products->getCollection()->transform(function ($product) {
+            return $this->transformProduct($product);
+        });
 
         return response()->json([
             'status' => 'success',
@@ -43,13 +46,10 @@ class ProductController extends Controller
     }
 
     /**
-     * GET BY ID - Menampilkan detail produk berdasarkan ID
-     * PUBLIC - Tidak perlu authentication
-     * URL: GET /api/products/{id}
+     * GET BY ID - Menampilkan detail produk
      */
     public function show(string $identifier): JsonResponse
     {
-        // Cek apakah identifier adalah slug (contains letters) atau ID (numeric)
         if (is_numeric($identifier)) {
             $product = Product::find($identifier);
         } else {
@@ -63,20 +63,19 @@ class ProductController extends Controller
             ], 404);
         }
 
-        // Include transactions count jika perlu
-        $product->loadCount('transactions');
+        // ✅ Transform product sebelum return
+        $transformedProduct = $this->transformProduct($product);
+        $transformedProduct->loadCount('transactions');
 
         return response()->json([
             'status' => 'success',
             'message' => 'Product retrieved successfully',
-            'data' => $product
+            'data' => $transformedProduct
         ], 200);
     }
 
     /**
      * POST - Membuat produk baru
-     * PROTECTED - Butuh authentication (middleware auth:api)
-     * URL: POST /api/products
      */
     public function store(Request $request): JsonResponse
     {
@@ -86,35 +85,35 @@ class ProductController extends Controller
             'price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
             'category' => 'required|in:action_figure,lego,puzzle,board_game,educational,collector',
-            'image_url' => 'nullable|url',
             'age_range' => 'required|in:0-3,4-7,8-12,13+',
             'brand' => 'nullable|string|max:255',
             'rating' => 'nullable|numeric|min:0|max:5',
             'is_featured' => 'nullable|boolean',
-            'file' => 'nullable|file|max:5120', // Max 5MB
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
         ]);
 
         // Handle file upload
-        if ($request->hasFile('file')) {
-            $file = $request->file('file');
-            $fileName = time() . '_' . $file->getClientOriginalName();
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            $fileName = time() . '_' . str_replace(' ', '_', $file->getClientOriginalName());
             $filePath = $file->storeAs('products', $fileName, 'public');
-            $validated['file_path'] = $filePath;
+            $validated['image_path'] = $filePath;
         }
 
         $product = Product::create($validated);
 
+        // ✅ Transform product untuk response
+        $transformedProduct = $this->transformProduct($product);
+
         return response()->json([
             'status' => 'success',
             'message' => 'Product created successfully',
-            'data' => $product
+            'data' => $transformedProduct
         ], 201);
     }
 
     /**
      * PATCH - Update produk berdasarkan ID
-     * PROTECTED - Butuh authentication (middleware auth:api)
-     * URL: PATCH /api/products/{id}
      */
     public function update(Request $request, string $id): JsonResponse
     {
@@ -133,40 +132,41 @@ class ProductController extends Controller
             'price' => 'sometimes|numeric|min:0',
             'stock' => 'sometimes|integer|min:0',
             'category' => 'sometimes|in:action_figure,lego,puzzle,board_game,educational,collector',
-            'image_url' => 'nullable|url',
             'age_range' => 'sometimes|in:0-3,4-7,8-12,13+',
             'brand' => 'nullable|string|max:255',
             'rating' => 'nullable|numeric|min:0|max:5',
             'is_featured' => 'nullable|boolean',
-            'file' => 'nullable|file|max:5120', // Max 5MB
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
         ]);
 
         // Handle file upload
-        if ($request->hasFile('file')) {
-            // Delete old file if exists
-            if ($product->file_path && Storage::disk('public')->exists($product->file_path)) {
-                Storage::disk('public')->delete($product->file_path);
+        if ($request->hasFile('image')) {
+            // Delete old image if exists
+            if ($product->image_path && Storage::disk('public')->exists($product->image_path)) {
+                Storage::disk('public')->delete($product->image_path);
             }
 
-            $file = $request->file('file');
-            $fileName = time() . '_' . $file->getClientOriginalName();
+            $file = $request->file('image');
+            $fileName = time() . '_' . str_replace(' ', '_', $file->getClientOriginalName());
             $filePath = $file->storeAs('products', $fileName, 'public');
-            $validated['file_path'] = $filePath;
+            $validated['image_path'] = $filePath;
         }
 
         $product->update($validated);
 
+        // ✅ Refresh product dari DB dan transform
+        $product->refresh();
+        $transformedProduct = $this->transformProduct($product);
+
         return response()->json([
             'status' => 'success',
             'message' => 'Product updated successfully',
-            'data' => $product
+            'data' => $transformedProduct
         ], 200);
     }
 
     /**
      * DELETE - Hapus produk berdasarkan ID (soft delete)
-     * PROTECTED - Butuh authentication (middleware auth:api)
-     * URL: DELETE /api/products/{id}
      */
     public function destroy(string $id): JsonResponse
     {
@@ -179,12 +179,39 @@ class ProductController extends Controller
             ], 404);
         }
 
-        // Soft delete (tidak menghapus file karena menggunakan soft delete)
+        // Delete image file if exists
+        if ($product->image_path && Storage::disk('public')->exists($product->image_path)) {
+            Storage::disk('public')->delete($product->image_path);
+        }
+
+        // Soft delete
         $product->delete();
 
         return response()->json([
             'status' => 'success',
             'message' => 'Product deleted successfully'
         ], 200);
+    }
+
+    /**
+     * ✅ PERBAIKAN UTAMA: Helper transform product
+     * Ensure image_url SELALU ada dalam response
+     */
+    private function transformProduct($product)
+    {
+        // Buat array data product
+        $data = $product->toArray();
+
+        // ✅ PRIORITAS: Generate image_url yang PASTI bisa diakses
+        if ($product->image_path) {
+            // Gunakan url() helper Laravel untuk generate full URL
+            $data['image_url'] = url('storage/' . $product->image_path);
+        } else {
+            // Fallback ke null jika tidak ada gambar
+            $data['image_url'] = null;
+        }
+
+        // Return sebagai stdClass agar konsisten dengan Eloquent model
+        return (object) $data;
     }
 }

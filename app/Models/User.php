@@ -1,5 +1,4 @@
 <?php
-// app/Models/User.php
 
 namespace App\Models;
 
@@ -16,7 +15,7 @@ class User extends Authenticatable implements JWTSubject
         'name',
         'email',
         'password',
-        'role', // Tambahkan role
+        'role', // ✅ TAMBAHKAN INI
     ];
 
     protected $hidden = [
@@ -32,7 +31,7 @@ class User extends Authenticatable implements JWTSubject
         ];
     }
 
-    // JWT Methods
+    // Implementasi method dari JWTSubject
     public function getJWTIdentifier()
     {
         return $this->getKey();
@@ -40,25 +39,23 @@ class User extends Authenticatable implements JWTSubject
 
     public function getJWTCustomClaims()
     {
-        return [
-            'role' => $this->role, // Tambahkan role ke JWT token
-        ];
+        return [];
     }
 
-    // Helper Methods untuk Check Role
-    public function isAdmin(): bool
+    // ✅ TAMBAHKAN: Relasi dengan transactions
+    public function transactions()
+    {
+        return $this->hasMany(\App\Models\Transaction::class);
+    }
+
+    // ✅ TAMBAHKAN: Helper method untuk cek role
+    public function isAdmin()
     {
         return $this->role === 'admin';
     }
 
-    public function isUser(): bool
+    public function isUser()
     {
         return $this->role === 'user';
-    }
-
-    // Relasi
-    public function transactions()
-    {
-        return $this->hasMany(Transaction::class);
     }
 }

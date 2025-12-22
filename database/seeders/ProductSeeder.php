@@ -15,7 +15,8 @@ class ProductSeeder extends Seeder
             'price' => 1250000,
             'stock' => 15,
             'category' => 'lego',
-            'image_url' => 'https://example.com/lego-police.jpg',
+            'image_url' => null, // ← UBAH JADI NULL
+            'image_path' => null, // ← TAMBAHKAN INI
             'age_range' => '8-12',
             'brand' => 'LEGO',
             'rating' => 4.5,
@@ -28,7 +29,8 @@ class ProductSeeder extends Seeder
             'price' => 850000,
             'stock' => 8,
             'category' => 'action_figure',
-            'image_url' => 'https://example.com/gundam-rx78.jpg',
+            'image_url' => null, // ← UBAH JADI NULL
+            'image_path' => null, // ← TAMBAHKAN INI
             'age_range' => '13+',
             'brand' => 'Bandai',
             'rating' => 4.8,
@@ -41,7 +43,8 @@ class ProductSeeder extends Seeder
             'price' => 350000,
             'stock' => 25,
             'category' => 'board_game',
-            'image_url' => 'https://example.com/monopoly.jpg',
+            'image_url' => null, // ← UBAH JADI NULL
+            'image_path' => null, // ← TAMBAHKAN INI
             'age_range' => '8-12',
             'brand' => 'Hasbro',
             'rating' => 4.3,

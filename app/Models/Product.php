@@ -14,17 +14,17 @@ class Product extends Model
 
     protected $fillable = [
         'name',
-        'slug', // Tambah slug
+        'slug',
         'description',
         'price',
         'stock',
         'category',
-        'image_url',
+        'image_url', // Keep untuk backward compatibility
+        'image_path', // Path untuk uploaded file
         'age_range',
         'brand',
         'rating',
         'is_featured',
-        'file_path',
     ];
 
     protected $casts = [
@@ -33,6 +33,9 @@ class Product extends Model
         'is_featured' => 'boolean',
         'stock' => 'integer'
     ];
+
+    // Append image_url untuk response API
+    protected $appends = ['full_image_url'];
 
     // Auto-generate slug
     protected static function boot()
@@ -48,6 +51,21 @@ class Product extends Model
                 $product->slug = Str::slug($product->name) . '-' . Str::random(6);
             }
         });
+    }
+
+    // Accessor untuk mendapatkan full URL image
+    public function getFullImageUrlAttribute()
+    {
+        if ($this->image_path) {
+            return asset('storage/' . $this->image_path);
+        }
+
+        // Fallback ke image_url jika masih ada data lama
+        if ($this->image_url) {
+            return $this->image_url;
+        }
+
+        return null;
     }
 
     public function transactions()
