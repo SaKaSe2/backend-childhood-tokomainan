@@ -24,10 +24,10 @@ class ProductController extends Controller
         $query = Product::query();
 
         if ($search) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhere('brand', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('brand', 'like', "%{$search}%");
             });
         }
 
@@ -47,9 +47,14 @@ class ProductController extends Controller
      * PUBLIC - Tidak perlu authentication
      * URL: GET /api/products/{id}
      */
-    public function show(string $id): JsonResponse
+    public function show(string $identifier): JsonResponse
     {
-        $product = Product::find($id);
+        // Cek apakah identifier adalah slug (contains letters) atau ID (numeric)
+        if (is_numeric($identifier)) {
+            $product = Product::find($identifier);
+        } else {
+            $product = Product::where('slug', $identifier)->first();
+        }
 
         if (!$product) {
             return response()->json([
@@ -57,6 +62,9 @@ class ProductController extends Controller
                 'message' => 'Product not found'
             ], 404);
         }
+
+        // Include transactions count jika perlu
+        $product->loadCount('transactions');
 
         return response()->json([
             'status' => 'success',

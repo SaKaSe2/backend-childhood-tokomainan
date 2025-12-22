@@ -1,4 +1,5 @@
 <?php
+// database/seeders/DatabaseSeeder.php
 
 namespace Database\Seeders;
 
@@ -10,16 +11,26 @@ class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
 
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Create admin user
+        User::factory()->create([
+            'name' => 'Admin User',
+            'email' => 'admin@childhood.com',
+            'password' => bcrypt('password123'),
+        ]);
 
+        // Create regular user
         User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
+            'password' => bcrypt('password123'),
+        ]);
+
+        // Seed products and transactions
+        $this->call([
+            ProductSeeder::class,
+            TransactionSeeder::class,
         ]);
     }
 }
